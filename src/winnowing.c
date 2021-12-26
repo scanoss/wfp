@@ -29,6 +29,11 @@
 #include <openssl/md5.h>
 #include "external/crc32c/crc32c.c"
 
+#define BUFFER_RATE 4
+/* This will apply on both GRAM and WINDOW below,
+   eg. "GRAM Buffer Size" / GRAM = BUFFFER_RATE.
+   This will be use to optimize the performance of shift_gram and shift_windows */
+
 uint8_t GRAM  = 30;   // Winnowing gram size in bytes
 uint8_t WINDOW = 64;  // Winnowing window size in bytes
 uint32_t MAX_UINT32 = 4294967295;
@@ -45,24 +50,40 @@ uint8_t normalize (uint8_t byte)
 	return 0;
 }
 
-/* Left shift one window */
-void shift_window(uint32_t *window)
+/* Left shift one window by window++, if the buffer is going to exhausted,
+   left shift the WINDOW size of windows to leftmost together, this will reduce
+   average operations of the func from WINDOW to
+   (1 + WINDOW / ((BUFFER_RATE - 1) * WINDOW) <= 2. */
+uint32_t* shift_window(uint32_t *window, uint32_t *window_buffer)
 {
-	for (uint32_t i = 0; i < (WINDOW - 1); i++)
+	window++;
+	if (window >= (window_buffer + (BUFFER_RATE - 1) * WINDOW))
 	{
-		window[i] = window[i + 1];
+		window = window - (BUFFER_RATE - 1) * WINDOW;
+		for (uint32_t i = 0; i < (WINDOW - 1); i++)
+		{
+			window[i] = window[i + (BUFFER_RATE - 1) * WINDOW];
+		}
 	}
-	window[WINDOW - 1] = 0;
+	return window;
 }
 
-/* Left shift one gram */
-void shift_gram(uint8_t *gram)
+/* Left shift one gram by gram++, if the buffer is going to exhausted,
+   left shift the GRAM size of bytes to leftmost together, this will reduce
+   average operations of the func from GRAM to
+   (1 + GRAM / ((BUFFER_RATE - 1) * GRAM) <= 2. */
+uint8_t* shift_gram(uint8_t *gram, uint8_t *gram_buffer)
 {
-	for (uint32_t i = 0; i < (GRAM - 1); i++)
+	gram++;
+	if (gram >= (gram_buffer + (BUFFER_RATE - 1) * GRAM))
 	{
-		gram[i] = gram[i + 1];
+		gram = gram - (BUFFER_RATE - 1) * GRAM;
+		for (uint32_t i = 0; i < (GRAM - 1); i++)
+		{
+			gram[i] = gram[i + (BUFFER_RATE - 1) * GRAM];
+		}
 	}
-	gram[GRAM - 1] = 0;
+	return gram;
 }
 
 /* Select smaller hash for the given window */
@@ -109,9 +130,11 @@ uint32_t winnowing (char *src, uint32_t *hashes, uint32_t *lines, uint32_t limit
 	uint32_t counter = 0;
 	uint32_t hash = MAX_UINT32;
 	uint32_t last = 0;
-	uint8_t *gram = malloc (GRAM);
+	uint8_t *gram_buffer = malloc (GRAM * BUFFER_RATE);
+	uint8_t *gram = gram_buffer;
 	uint32_t gram_ptr = 0;
-	uint32_t *window = malloc (WINDOW * sizeof(uint32_t));
+	uint32_t *window_buffer = malloc (WINDOW * sizeof(uint32_t) * BUFFER_RATE);
+	uint32_t *window = window_buffer;
 	uint32_t window_ptr = 0;
 
 	/* Process one byte at a time */
@@ -143,16 +166,16 @@ uint32_t winnowing (char *src, uint32_t *hashes, uint32_t *lines, uint32_t limit
 
 				if (counter >= limit) break;
 
-				shift_window(window);
+				window = shift_window(window, window_buffer);
 				window_ptr = WINDOW - 1;
 			}
 
-			shift_gram(gram);
+			gram = shift_gram(gram, gram_buffer);
 			gram_ptr = GRAM - 1;
 		}
 	}
 
-	free (gram);
-	free (window);
+	free (gram_buffer);
+	free (window_buffer);
 	return counter;
 }
