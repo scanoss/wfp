@@ -86,13 +86,38 @@ uint8_t* shift_gram(uint8_t *gram, uint8_t *gram_buffer)
 	return gram;
 }
 
-/* Select smaller hash for the given window */
+/* Select smaller hash for the given window.
+   Notice that there is only (1 / WINDOW) probability in which the last-time smallest hash
+   is left-shifted out. On other words, in most case, we can just compare the left-shifted-in (rightmost)
+   one with last-time smallest one. Using this fact we can reduce the average compare times from WINDOW to
+   1 + (1 / WINDOW) * WINDOW = 2 */
+static int32_t last_smallest_ptr = 0; // record last time the position of the smallest hash
 uint32_t smaller_hash(uint32_t *window)
 {
-	uint32_t hash = MAX_UINT32;
-	for (uint32_t h = 0; h < WINDOW; h++)
+	last_smallest_ptr--; // Last time the window left shift by 1, so decrease by 1.
+	uint32_t hash;
+	if (last_smallest_ptr <= -1) // If the last smallest hash was left-shifted out.
 	{
-		if (window[h] < hash) hash = window[h];
+		hash = window[0];
+		last_smallest_ptr = 0;
+		for (uint32_t h = 1; h < WINDOW; h++) // scan all the WINDOW to find the smallest.
+		{
+			if (window[h] < hash)
+			{
+				hash = window[h];
+				last_smallest_ptr = h;
+			}
+		}
+	}
+	else
+	{ // If the last smallest hash is still in this WINDOW just compare it with the new (rightmost) one.
+
+		hash = window[last_smallest_ptr];
+		if (window[WINDOW - 1] < hash)
+		{
+			hash = window[WINDOW - 1];
+			last_smallest_ptr = WINDOW - 1;
+		}
 	}
 	return hash;
 }
