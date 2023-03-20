@@ -143,10 +143,10 @@ Uniformity and footprint are the two resulting factors evaluated when testing di
 
 To evaluate footprint, we simply count the amount of fingerprints generated in the output. The graphs below illustrate how footprint is affected by different combinations of _gram_ and _window_:
 
-- [C zlib](images/Footprint-C-zlib.jpg)
-- [Java pngtastic](images/Footprint-Java-pngtastic.jpg)
-- [Javascript (jquery)](images/Footprint-Javascript-jquery.jpg)
-- [Ruby (jqueryrails)](images/Footprint-Ruby-jqueryrails.jpg)
+- [C zlib](images/W-C.png)
+- [Java pngtastic](images/W-JAVA.png)
+- [Javascript (jquery)](images/W-JQuery.png)
+- [Ruby (jqueryrails)](images/W-Ruby.png)
 
 #### Uniformity
 
@@ -154,10 +154,10 @@ In order to evaluate uniformity, we establish a uniformity index, which is a fac
 
 The graphs below illustrate how different combinations of _gram_ and _window_ affect uniformity:
 
-- [C (zlib)](images/Uniformity-C-zlib.jpg)
-- [Java (pngtastic)](images/Uniformity-Java-pngtastic.jpg)
-- [Javascript (jquery)](images/Uniformity-Javascript-jquery.jpg)
-- [Ruby (jqueryrails)](images/Uniformity-Ruby-jqueryrails.jpg)
+- [C (zlib)](images/H-C.png)
+- [Java (pngtastic)](images/H-JAVA.png)
+- [Javascript (jquery)](images/HJQuery.png)
+- [Ruby (jqueryrails)](images/HRuby.png)
 
 ### Conclusion
 
@@ -168,4 +168,3 @@ Based on the different exercises and comparison tests we concluded that _gram=30
 WFP is released under the GPL 2.0 license. Please check the LICENSE file for more information.
 
 Copyright (C) 2018-2020 SCANOSS Ltd.
-
