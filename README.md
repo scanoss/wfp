@@ -167,4 +167,4 @@ Based on the different exercises and comparison tests we concluded that _gram=30
 
 WFP is released under the GPL 2.0 license. Please check the LICENSE file for more information.
 
-Copyright (C) 2018-2020 SCANOSS Ltd.
+Copyright (C) 2018-2020 SCANOSS Ltd. 
